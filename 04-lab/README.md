@@ -48,42 +48,46 @@ ADK (Agent Development Kit) đóng vai trò **MCP Client**
 
 So với bài 02 (viết client thủ công bằng `mcp.ClientSession`), ADK giúp bạn **không phải viết vòng lặp function calling thủ công** nữa. Toàn bộ luồng list_tools → model quyết định → call_tool → model tổng hợp được ADK xử lý tự động.
 
-## Setup
+## Setup (Windows — dùng chung .venv của repo)
 
-### 1. MCP Server
+> Bản này đã đổi model agent sang **OpenAI qua LiteLLM** (`openai/gpt-4o-mini`)
+> thay cho Gemini, và dùng chung `..\..\.venv` thay vì `uv sync` từng thư mục.
 
-```bash
-cd mcp-server
-uv sync
+### 1. MCP Server (terminal 1)
 
-# Set your WeatherAPI key (get one free at https://weatherapi.com)
-export WEATHERAPI_KEY="your_weatherapi_key"
-
-# Start the server (runs on port 8085 by default)
-uv run python weather.py
+```powershell
+cd 04-lab\mcp-server
+# điền WEATHERAPI_KEY vào file .env (key free tại https://www.weatherapi.com/)
+..\..\.venv\Scripts\python.exe weather.py
 ```
 
-The server will be available at `http://localhost:8085/mcp`.
+Server chạy tại `http://localhost:8085/mcp`. Thêm `--stdio` để chạy chế độ stdio.
 
-### 2. ADK Agent (Client)
+### 2. ADK Agent (terminal 2)
 
-```bash
-cd mcp-client
-uv sync
+`04-lab/mcp-client/.env` đã có sẵn `OPENAI_API_KEY` (lấy từ bước 1) và `MCP_SERVER_URL`.
 
-# Create .env file with your Gemini API key
-echo "GOOGLE_API_KEY=your_gemini_api_key" > .env
+Chạy nhanh không cần trình duyệt:
 
-# Start ADK web interface
-uv run adk web
+```powershell
+cd 04-lab\mcp-client
+..\..\.venv\Scripts\python.exe test_agent.py "Thời tiết Hà Nội hôm nay?"
 ```
 
-Open http://localhost:8000 in your browser, select `weather_agent`, and ask about the weather.
+Hoặc giao diện web ADK:
+
+```powershell
+..\..\.venv\Scripts\adk.exe web
+```
+
+Mở http://localhost:8000, chọn `weather_agent`, hỏi về thời tiết.
 
 ## Configuration
 
 | Variable | Where | Description |
 |----------|-------|-------------|
-| `WEATHERAPI_KEY` | mcp-server | API key from weatherapi.com |
-| `GOOGLE_API_KEY` | mcp-client/.env | Gemini API key |
-| `PORT` | mcp-server (env) | Override server port (default: 8085) |
+| `WEATHERAPI_KEY` | mcp-server/.env | API key từ weatherapi.com |
+| `OPENAI_API_KEY` | mcp-client/.env | Key OpenAI cho agent (qua LiteLLM) |
+| `LITELLM_MODEL` | mcp-client/.env | Model agent (mặc định `openai/gpt-4o-mini`) |
+| `MCP_SERVER_URL` | mcp-client/.env | URL MCP server (mặc định `http://localhost:8085/mcp`) |
+| `PORT` | mcp-server (env) | Override cổng server (mặc định 8085) |

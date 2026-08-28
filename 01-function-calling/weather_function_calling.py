@@ -9,8 +9,31 @@ Cách chạy:
     python weather_function_calling.py
 """
 
+import os
+import sys
+
+# Windows console mặc định cp1252 -> ép UTF-8 để in được tiếng Việt/emoji
+for _stream in (sys.stdout, sys.stderr):
+    try:
+        _stream.reconfigure(encoding="utf-8")
+    except (AttributeError, ValueError):
+        pass
+
 from google import genai
 from google.genai import types
+
+try:
+    from dotenv import load_dotenv
+
+    load_dotenv()  # đọc GEMINI_API_KEY từ file .env cùng thư mục
+except ImportError:
+    pass
+
+if not os.getenv("GEMINI_API_KEY") and not os.getenv("GOOGLE_API_KEY"):
+    raise SystemExit(
+        "Chưa có API key. Tạo file .env với dòng: GEMINI_API_KEY=<key của bạn> "
+        "(lấy key tại https://aistudio.google.com/apikey)"
+    )
 
 client = genai.Client()
 

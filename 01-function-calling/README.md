@@ -17,15 +17,22 @@ User hỏi  →  Model quyết định gọi get_weather(city="Hà Nội")
 
 ```bash
 pip install -r ../requirements.txt
-export GEMINI_API_KEY=...
-python weather_function_calling.py
+# tạo file .env với dòng: OPENAI_API_KEY=sk-...
+python weather_function_calling_openai.py
+```
+
+Trên Windows dùng venv của repo:
+
+```powershell
+..\.venv\Scripts\python.exe weather_function_calling_openai.py
 ```
 
 ## File
 
 | File | Mô tả |
 |---|---|
-| `weather_function_calling.py` | Định nghĩa schema, thực thi tool, gọi model Gemini, xử lý vòng lặp function calling |
+| `weather_function_calling_openai.py` | **Bản dùng cho lab** — schema thủ công (format OpenAI), thực thi tool, gọi model OpenAI, xử lý vòng lặp function calling |
+| `weather_function_calling.py` | Bản gốc dùng Google Gemini SDK (cần `GEMINI_API_KEY` dạng `AIza...`) — cùng logic, chỉ khác SDK |
 
 ---
 

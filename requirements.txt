@@ -2,3 +2,11 @@ google-genai>=1.0.0
 mcp[cli]>=1.2.0
 httpx>=0.28.0
 uvicorn>=0.34.0
+python-dotenv>=1.0.0
+openai>=1.40.0
+
+# 04-lab (ADK agent + MCP server qua Streamable HTTP)
+google-adk>=2.8.0
+litellm>=1.40.0
+fastmcp>=3.0.0
+starlette>=0.37.0

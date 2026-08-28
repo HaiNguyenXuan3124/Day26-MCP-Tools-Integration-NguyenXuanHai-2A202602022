@@ -1,56 +1,57 @@
-"""
-Weather Agent - Connects to Remote MCP Server on Cloud Run
-Successfully connects to custom MCP HTTP endpoints!
-"""
-from google.adk import Agent
-from google.adk.tools.mcp_tool.mcp_toolset import McpToolset, StreamableHTTPConnectionParams
-import logging
+"""Weather Agent - Google ADK + MCP server (Streamable HTTP).
 
-# Set up logging
+Model chạy qua LiteLLM (OpenAI) thay cho Gemini để dùng chung OPENAI_API_KEY.
+Đổi model bằng biến môi trường LITELLM_MODEL (mặc định: openai/gpt-4o-mini).
+"""
+import logging
+import os
+
+from dotenv import load_dotenv
+
+load_dotenv()  # đọc OPENAI_API_KEY, MCP_SERVER_URL, LITELLM_MODEL từ .env
+
+from google.adk import Agent
+from google.adk.models.lite_llm import LiteLlm
+from google.adk.tools.mcp_tool.mcp_toolset import (
+    McpToolset,
+    StreamableHTTPConnectionParams,
+)
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-MCP_SERVER_URL = "http://localhost:8085/mcp"
+MCP_SERVER_URL = os.getenv("MCP_SERVER_URL", "http://localhost:8085/mcp")
+MODEL = os.getenv("LITELLM_MODEL", "openai/gpt-4o-mini")
 
-logger.info(f"🌐 Initializing weather agent with remote MCP server")
-logger.info(f"📡 MCP Server: {MCP_SERVER_URL}")
+logger.info(f"🌐 Weather agent | model={MODEL} | MCP={MCP_SERVER_URL}")
 
 try:
-    # Create connection parameters for the remote MCP server
     connection_params = StreamableHTTPConnectionParams(
         url=MCP_SERVER_URL,
-        timeout=30.0,  # Increased timeout for Cloud Run cold starts
+        timeout=30.0,
     )
-    
-    # Create the MCP toolset - this will connect to the remote server
-    logger.info("🔌 Connecting to MCP server...")
-    weather_tools = McpToolset(
-        connection_params=connection_params,
-    )
-    logger.info("✅ MCP toolset created successfully")
-    
-    # Create the agent with remote MCP tools
+    weather_tools = McpToolset(connection_params=connection_params)
+    logger.info("✅ MCP toolset created")
+
     root_agent = Agent(
         name="weather_agent",
-        model="gemini-2.5-flash",
+        model=LiteLlm(model=MODEL),
+        instruction=(
+            "Bạn là trợ lý thời tiết. Dùng các tool get_current_weather, "
+            "get_forecast, health_check để trả lời. Trả lời bằng tiếng Việt, "
+            "ngắn gọn, kèm lời khuyên thực tế."
+        ),
         tools=[weather_tools],
     )
-    logger.info("✅ Weather agent initialized with remote MCP tools:")
-    logger.info("   - get_current_weather(city)")
-    logger.info("   - get_forecast(city, days)")
-    logger.info("   - health_check()")
-    logger.info("🎉 Remote MCP connection successful!")
-    
+    logger.info("✅ Weather agent initialized with remote MCP tools")
+
 except Exception as e:
-    logger.error(f"❌ Failed to connect to remote MCP server: {e}")
-    logger.error(f"   Server URL: {MCP_SERVER_URL}")
+    logger.error(f"❌ Failed to init agent with MCP tools: {e}")
     import traceback
+
     traceback.print_exc()
-    
-    # Create a fallback agent without tools
-    logger.warning("⚠️  Creating fallback agent without MCP tools")
     root_agent = Agent(
         name="weather_agent",
-        model="gemini-2.5-flash",
+        model=LiteLlm(model=MODEL),
+        instruction="Bạn là trợ lý thời tiết (chưa kết nối được MCP server).",
     )
-

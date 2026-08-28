@@ -2,11 +2,26 @@ from typing import Any
 import asyncio
 import httpx
 import os
-from mcp.server.fastmcp import FastMCP
+import sys
+
+for _stream in (sys.stdout, sys.stderr):
+    try:
+        _stream.reconfigure(encoding="utf-8")
+    except (AttributeError, ValueError):
+        pass
+
+try:
+    from dotenv import load_dotenv
+
+    load_dotenv()  # đọc WEATHERAPI_KEY từ .env cùng thư mục
+except ImportError:
+    pass
+
+from fastmcp import FastMCP
 
 # Initialize FastMCP server
 port = int(os.getenv("PORT", 8085))
-mcp = FastMCP("weather", host="0.0.0.0", port=port)
+mcp = FastMCP("weather")
 
 # Constants
 WEATHERAPI_BASE = "https://api.weatherapi.com/v1"
@@ -139,14 +154,9 @@ print("✅ MCP server initialized with Streamable HTTP transport")
 print("🔧 Available tools: get_current_weather, get_forecast, health_check")
 
 if __name__ == "__main__":
-    import sys
-    
-    is_cloud_run = bool(os.getenv("PORT"))
-    is_standalone = len(sys.argv) == 1 and sys.stdin.isatty()
-    
-    if is_cloud_run or is_standalone:
-        print(f"🚀 Starting MCP server on http://0.0.0.0:{port}/mcp")
-        mcp.run(transport="streamable-http")
-    else:
-        print("Starting FastMCP server in stdio mode for local client", file=sys.stderr)
+    if "--stdio" in sys.argv:
+        print("Starting FastMCP server in stdio mode", file=sys.stderr)
         mcp.run()
+    else:
+        print(f"🚀 Starting MCP server on http://0.0.0.0:{port}/mcp")
+        mcp.run(transport="streamable-http", host="0.0.0.0", port=port)
