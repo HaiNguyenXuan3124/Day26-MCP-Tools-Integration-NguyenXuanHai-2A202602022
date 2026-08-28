@@ -91,3 +91,36 @@ Mở http://localhost:8000, chọn `weather_agent`, hỏi về thời tiết.
 | `LITELLM_MODEL` | mcp-client/.env | Model agent (mặc định `openai/gpt-4o-mini`) |
 | `MCP_SERVER_URL` | mcp-client/.env | URL MCP server (mặc định `http://localhost:8085/mcp`) |
 | `PORT` | mcp-server (env) | Override cổng server (mặc định 8085) |
+
+## Deploy MCP Server bằng Docker
+
+`mcp-server/Dockerfile` đóng gói server thành image chạy Streamable HTTP. Key
+truyền qua biến môi trường lúc chạy — **không** bake vào image (`.dockerignore`
+đã loại `.env`).
+
+### Build + chạy local
+
+```powershell
+cd 04-lab\mcp-server
+docker build -t weather-mcp:local .
+docker run --rm -e PORT=8080 -e WEATHERAPI_KEY=<key> -p 8080:8080 weather-mcp:local
+```
+
+Server ở `http://localhost:8080/mcp`. Đổi `MCP_SERVER_URL` trong
+`mcp-client/.env` sang cổng này rồi chạy agent như trên.
+
+### Deploy lên Google Cloud Run
+
+```bash
+PROJECT=<gcp-project-id>
+gcloud builds submit --tag gcr.io/$PROJECT/weather-mcp
+gcloud run deploy weather-mcp \
+  --image gcr.io/$PROJECT/weather-mcp \
+  --region asia-southeast1 \
+  --allow-unauthenticated \
+  --set-env-vars WEATHERAPI_KEY=<key>
+```
+
+Cloud Run tự set `PORT` (thường 8080) và server nghe `0.0.0.0:$PORT`. Lấy URL
+`gcloud run services describe weather-mcp --format 'value(status.url)'` rồi đặt
+`MCP_SERVER_URL=https://<cloud-run-url>/mcp`.
